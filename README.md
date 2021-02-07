@@ -28,7 +28,7 @@ You will get extra points for a successful refactoring of the code in service-a 
 * kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 
 **Set up the environment:**
-* Set up the Minikube cluster or any other kind of Kubernetes cluster
+* Set up the Minikube cluster or any other kind of Kubernetes cluster with Network Policies enabled. You can use Calico.
 > minikube -p sre-coding-challenge start --network-plugin=cni --cni=calico
 * Apply our default configurations for our "default" namespace. This will apply default Network Policies that will deny all ingress and egress traffic to this namespace by default.
 > k apply -f kubernetes/default-namespace.yaml
