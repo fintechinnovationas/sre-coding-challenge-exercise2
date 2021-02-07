@@ -33,8 +33,11 @@ You will get extra points for a successful refactoring of the code in service-a 
 * Apply our default configurations for our "default" namespace. This will apply default Network Policies that will deny all ingress and egress traffic to this namespace by default.
 > k apply -f kubernetes/default-namespace.yaml
 * Deploy both service-a and service-b using helm
+
+Inside service_a folder:
 > helm upgrade --install --namespace default -f ./values.yaml service-a ../kubernetes/helm-chart/
 
+Inside service_b folder:
 > helm upgrade --install --namespace default -f ./values.yaml service-b ../kubernetes/helm-chart/
 
 After this, the environment will be configured.
