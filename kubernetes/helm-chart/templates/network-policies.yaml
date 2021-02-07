@@ -1,0 +1,71 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $root := . -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-network-policy
+spec:
+  podSelector:
+    matchLabels:
+    {{- toYaml .Values.networkPolicy.applyToLabels | nindent 10 }}
+  policyTypes:
+{{- if or .Values.networkPolicy.ingress }}
+    - Ingress
+{{- end }}
+{{- if or .Values.networkPolicy.egress .Values.networkPolicy.fullEgress }}
+    - Egress
+{{- end }}
+
+
+  {{- if or .Values.networkPolicy.ingress }}
+  ingress:
+    {{ range $key, $val := .Values.networkPolicy.ingress }}
+    - from:
+        {{ range $keySelector, $valSelector := $val.selectors }}
+        - podSelector:
+            matchLabels: {{ range $keySelLabels, $valSelLabels := . }}
+              {{ $keySelLabels }}: {{ $valSelLabels }}{{- end }}
+      {{- end }}
+
+      ports:
+        - protocol: {{ $val.protocol }}
+          port: {{ $val.port }}
+
+    {{- end }}
+  {{- end }}
+
+  {{- if .Values.networkPolicy.fullEgress | default false }}
+  # Allow all egress. Parameter not compatible with an egress block
+  egress:
+    - {}
+  {{- end }}
+
+  {{- if or .Values.networkPolicy.egress }}
+  egress:
+    # Allow access to K8s DNS
+    - to:
+        - namespaceSelector: {}
+
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+
+
+
+    {{ range $key, $val := .Values.networkPolicy.egress }}
+    - to:
+        {{ range $keySelector, $valSelector := $val.selectors }}
+        - podSelector:
+            matchLabels: {{ range $keySelLabels, $valSelLabels := . }}
+              {{ $keySelLabels }}: {{ $valSelLabels }}{{- end }}
+        {{- end }}
+
+      ports:
+        - protocol: {{ $val.protocol }}
+          port: {{ $val.port }}
+
+    {{- end }}
+  {{- end }}
+{{- end }}

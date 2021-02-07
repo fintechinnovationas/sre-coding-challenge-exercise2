@@ -1,0 +1,62 @@
+replicaCount: 1
+subset: v1
+image:
+  repository: docker.io/fintechinnovation
+  name: sre-coding-challenge-service-a
+  tag: latest
+  pullPolicy: Always
+
+label:
+  app: service-a
+
+strategy:
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25%
+  type: RollingUpdate
+
+securityContext:
+  runAsUser: 1000
+  fsGroup: 1000
+
+
+readinessProbe:
+  enabled: true
+  httpPath: "/healthz"
+  port: {}
+  initialDelaySeconds: 15
+  timeoutSeconds: 3
+  periodSeconds: 5
+
+resources:
+  requests:
+    cpu: "0.03"
+    memory: "256Mi"
+  limits:
+    cpu: "0.3"
+    memory: "512Mi"
+
+service:
+  enabled: true
+  port: 5000
+  portName: http
+
+
+networkPolicy:
+  enabled: false
+  fullEgress: false
+  applyToLabels: []
+  ingress: []
+  egress: []
+#  applyToLabels:
+#    appName: my-app
+#  ingress:
+#    - protocol: TCP
+#      port: 4567
+#      selectors:
+#        - appName: my-app-2
+#  egress:
+#    - protocol: TCP
+#      port: 4567
+#      selectors:
+#        - appName: my-app-3

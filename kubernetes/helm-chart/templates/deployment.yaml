@@ -1,0 +1,85 @@
+{{- $root := . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels: {{ range $key, $val := .Values.label }}
+    {{ $key }}: {{ $val }}{{- end }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    subset: {{ .Values.subset }}
+
+spec:
+  selector:
+    matchLabels: {{ range $key, $val := .Values.label }}
+      {{ $key }}: {{ $val }}{{- end }}
+      release: {{ .Release.Name }}
+      subset: {{ .Values.subset }}
+  strategy:
+{{ toYaml .Values.strategy | indent 4 }}
+  template:
+    metadata:
+      labels: {{ range $key, $val := .Values.label }}
+        {{ $key }}: {{ $val }}{{- end }}
+        subset: {{ .Values.subset }}
+{{- if .Values.podExtraLabels }}
+{{ toYaml .Values.podExtraLabels | indent 8 }}
+{{- end }}
+        release: {{ .Release.Name }}
+
+      annotations:
+{{- if or .Values.podAnnotations }}
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+
+    spec:
+{{- if .Values.selector }}
+{{ toYaml .Values.selector | indent 6 }}
+{{- end }}
+
+      # Run as regular user, non-root
+      {{- if .Values.securityContext }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+      {{- end }}
+
+
+      containers:
+        - name: {{ template "application.fullname" . }}
+          image: "{{ .Values.image.repository }}/{{ .Values.image.name }}{{if .Values.image.tag }}:{{required "A valid .Values.image.tag is required!" .Values.image.tag }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+
+{{- if .Values.service.enabled }}
+          ports:
+            - name: {{ .Values.service.portName | default "http" }}
+              containerPort: {{ .Values.service.port }}
+{{- end }}
+
+
+
+{{- if and .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.httpPath }}
+              port: {{ .Values.service.port }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+{{- end }}
+
+          {{- if .Values.resources }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          {{- end }}
+
+
+          {{- if .Values.securityContext }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          {{- end }}
