@@ -21,7 +21,7 @@ You will get extra points for a successful refactoring of the code in service-a 
 
 ### Preparation steps
 
-**Pre-Requesities**
+**Pre-Requisities**
 * minikube: https://minikube.sigs.k8s.io/docs/start/
     * You can use any other way to have a Kubernetes Cluster as you want, the only hard requisite is that it must have Network Policies enabled
 * helm v3: https://helm.sh/docs/intro/install/
