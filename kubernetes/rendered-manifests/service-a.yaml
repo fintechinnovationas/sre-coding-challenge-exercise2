@@ -1,0 +1,116 @@
+---
+# Source: application/templates/network-policies.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: service-a-network-policy
+spec:
+  podSelector:
+    matchLabels:
+          app: service-a
+  policyTypes:
+    - Egress
+  egress:
+    # Allow access to K8s DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels: 
+              app: service-b
+      ports:
+        - protocol: TCP
+          port: 8888
+---
+# Source: application/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-a
+  labels: 
+    app: service-a
+    chart: application-0.1.0
+    release: service-a
+    heritage: Helm
+spec:
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: http
+      protocol: TCP
+  selector: 
+    app: service-a
+---
+# Source: application/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-a
+  labels: 
+    app: service-a
+    chart: application-0.1.0
+    release: service-a
+    heritage: Helm
+    subset: v1
+
+spec:
+  selector:
+    matchLabels: 
+      app: service-a
+      release: service-a
+      subset: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: 
+        app: service-a
+        subset: v1
+        release: service-a
+
+      annotations:
+
+    spec:
+
+      # Run as regular user, non-root
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+
+
+      containers:
+        - name: service-a-application
+          image: "docker.io/fintechinnovation/sre-coding-challenge-service-a:latest"
+          imagePullPolicy: Always
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - name: http
+              containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            timeoutSeconds: 3
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: "0.5"
+              memory: 512Mi
+            requests:
+              cpu: "0.03"
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false

@@ -1,0 +1,111 @@
+---
+# Source: application/templates/network-policies.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: service-b-network-policy
+spec:
+  podSelector:
+    matchLabels:
+          app: service-b
+  policyTypes:
+    - Ingress
+  ingress:
+    
+    - from:
+        
+        - podSelector:
+            matchLabels: 
+              app: service-a
+
+      ports:
+        - protocol: TCP
+          port: 8888
+---
+# Source: application/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-b
+  labels: 
+    app: service-b
+    chart: application-0.1.0
+    release: service-b
+    heritage: Helm
+spec:
+  ports:
+    - port: 8888
+      targetPort: 8888
+      name: http
+      protocol: TCP
+  selector: 
+    app: service-b
+---
+# Source: application/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-b
+  labels: 
+    app: service-b
+    chart: application-0.1.0
+    release: service-b
+    heritage: Helm
+    subset: v1
+
+spec:
+  selector:
+    matchLabels: 
+      app: service-b
+      release: service-b
+      subset: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels: 
+        app: service-b
+        subset: v1
+        release: service-b
+
+      annotations:
+
+    spec:
+
+      # Run as regular user, non-root
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+
+
+      containers:
+        - name: service-b-application
+          image: "docker.io/fintechinnovation/service-b:test"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - name: http
+              containerPort: 8888
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8888
+            timeoutSeconds: 3
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: "0.5"
+              memory: 200Mi
+            requests:
+              cpu: "0.03"
+              memory: 300Mi
+          securityContext:
+            allowPrivilegeEscalation: false

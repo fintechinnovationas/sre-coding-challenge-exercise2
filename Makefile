@@ -26,7 +26,7 @@ create-cluster: ## Create a k3s cluster
 
 .PHONY:
 render-service: ## Render Helm chart for the specified service
-	helm template $(SVC) ./kubernetes/helm-chart --namespace default -f $(SVC)/values.yaml > ./kubernetes/rendered_manifests/$(SVC).yaml
+	helm template $(SVC) ./kubernetes/helm-chart --namespace default -f $(SVC)/values.yaml > ./kubernetes/rendered-manifests/$(SVC).yaml
 
 .PHONY:
 build-jar: ## Build JAR file
