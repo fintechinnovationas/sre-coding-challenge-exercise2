@@ -27,8 +27,10 @@ public class ApiRestController {
 
 			// Get a JSON from a remote location
 			StringBuffer content = new StringBuffer();
+			// 
 			URL url = new URL("https://jsonplaceholder.typicode.com/posts");
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			// 
 			con.setRequestMethod("GET");
 			int status = con.getResponseCode();
 			log.info("Response Code: {}", status);
@@ -49,14 +51,16 @@ public class ApiRestController {
 			con.disconnect();
 
 			// Save JSON response to a file
-			FileWriter file = new FileWriter("/root/service_b_remote_response.json");
+			FileWriter file = new FileWriter("/app/data/service_b_remote_response.json");
 			file.write(content.toString());
 
 
 			return ResponseEntity.ok(HeyHoList);
-		}catch (Exception e){
+		}
+		catch (Exception e){
+			log.error("UNEXPECTED ERROR",e);
 			return new ResponseEntity<String>(
-					e.getLocalizedMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+					e.getClass() + " Excpetion occured " + e.getLocalizedMessage(), HttpStatus.SERVICE_UNAVAILABLE);
 		}
 	}
 

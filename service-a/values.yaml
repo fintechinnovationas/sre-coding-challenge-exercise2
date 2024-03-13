@@ -22,7 +22,6 @@ resources:
     cpu: "0.03"
     memory: "256Mi"
   limits:
-    cpu: "0.5"
     memory: "512Mi"
 
 service:

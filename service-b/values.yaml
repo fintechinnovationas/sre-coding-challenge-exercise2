@@ -1,10 +1,9 @@
 replicaCount: 1
 subset: v1
 image:
-  repository: docker.io/fintechinnovation
-  name: sre-coding-challenge-service-b
-  tag: latest
-  pullPolicy: Always
+  name: service-b
+  tag: test
+  pullPolicy: IfNotPresent
 
 label:
   app: service-b
@@ -19,11 +18,10 @@ readinessProbe:
 
 resources:
   requests:
-    cpu: "0.03"
-    memory: "64Mi"
+    memory: "300Mi"
   limits:
     cpu: "0.5"
-    memory: "100Mi"
+    memory: "200Mi"
 
 service:
   enabled: true
