@@ -1,63 +1,29 @@
-## SRE Coding Challenge - Exercise 2
+## general
 
-This Exercise is about debugging.
+Had to rename the folders so that I can use for pathing purposes with the image and the folders. 
 
-After running the preparation commands, you will start with a broken cluster that can potentially have
-issues with Kubernetes configuration, network issues and application issues.
+Using k3s as the cluster, overall much easier to work with than minikube or anything that's on a higher abstraction level.
 
-You will need to debug to try to fix both services.
+Started out with calico for CNI, but cilium is superior in every sense so had to redo the entire cluster. This solution needs cilium to be the CNI plugin, k3s specific instructions [here](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-cilium).
 
-### About the exercise
-Remember that you might need to change anything related with this deployment, from the cluster itself, to the network configuration or the code running the services.
+Use the Makefile to set things up, you can deploy as usual (either with helm or kctl apply directly). I like rendering manifests to see what I'm working with hence the option in the Makefile.
 
-Document every step in your testing.
-
-Remember that, even though it is not mandatory, you get extra points for recording all or parts of your debugging in video.
-
-You will get a score based on the number of issues resolved in this deployment.
-
-You will get extra points for a successful refactoring of the code in service-a and service-b to be more readable, scalable, secure, and less prune to errors found in production.
-
-
-### Preparation steps
-
-**Pre-Requisities**
-* minikube: https://minikube.sigs.k8s.io/docs/start/
-    * You can use any other way to have a Kubernetes Cluster as you want, the only hard requisite is that it must have Network Policies enabled
-* helm v3: https://helm.sh/docs/intro/install/
-* kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl/
-
-**Set up the environment:**
-* Set up the Minikube cluster or any other kind of Kubernetes cluster with Network Policies enabled. You can use Calico.
-> minikube -p sre-coding-challenge start --network-plugin=cni --cni=calico
-* Apply our default configurations for our "default" namespace. This will apply default Network Policies that will deny all ingress and egress traffic to this namespace by default.
-> k apply -f kubernetes/default-namespace.yaml
-* Deploy both service-a and service-b using helm
-
-Inside service_a folder:
-> helm upgrade --install --namespace default -f ./values.yaml service-a ../kubernetes/helm-chart/
-
-Inside service_b folder:
-> helm upgrade --install --namespace default -f ./values.yaml service-b ../kubernetes/helm-chart/
-
-After this, the environment will be configured.
-
-You will have 2 services:
-* service-a: A python service running the Flask framework on port 5000
-* service-b: A java service running with Springboot on port 8888
-
-### How to start debugging
-You will need to port-forward to service-a:
-> kubectl port-forward -n default <pod-name-of-service-a> 5000:5000
-
-And you can then send GET requests to:
-> curl http://localhost:5000/api/v1/hey-ho
-
-### How do I know that everything is working?
-Once you've figure out all the issues affecting these deployments, you will be able to get the following output when calling the API in service-a.
-
-![Success Response](data/success-response.png?raw=true "Success Response")
-
-Your requests should go to service-a with port-forwarding, and then service-a will send a request to service-b and will print the response.
-
-A successful request processed in service-b will create a file inside the service-b container and put the content of a json obtained from a remote location in it.
+## Tasks
+- [X] Makefile for repetitive tasks
+- [X] Render the manifests so that we actually what's going on.
+- [X] ImagepullPolicy to IfNotPresent
+- [X] DNS based networkpolicy for the json placeholder domain
+- [X] Path issue on service_b, Dockerfile and code changes so that it's on app/data and it actually has permissions to write to it
+- [X] Mem request increase so that GCC doesn't kill the pod periodically
+- [ ] Add GCC profiling to service_b
+- [ ] Better mem utilization -XX:MaxRAMPercentage=75.0 >> default is 25% on that alpine image
+- [ ] Add startupProbe for that initial delay for JAVA apps
+- [ ] setting the terminationMessagePolicy to "FallbackToLogsOnError"
+- [ ] Fix the readiness probe to probe something actually useful, like the site we're trying to reach
+- [ ] RollingUpdate settings don't make a lot of sense witgh replicas set to 1
+- [ ] You'd need to scale this most likely for multiple replicas
+- [X] Better error propagation in the JAVA codeso it's on the container logs with full stacktrace 
+- [X] Fix resource limits for CPU for all deployments
+- [ ] Tight coupling in python code, hard-coded url is bad
+- [ ] Python docker image doesn't build anymore
+- [ ] Separate services to their own namespaces, fix networkpolicies accordingly > this won't work because of baked in url in python code, which doesn't build now due to deprecation
